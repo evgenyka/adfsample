@@ -89,7 +89,7 @@ public class adfRemoteSession {
         return sessionArn;
     }
 
-    private void getSessionHost(){
+    private void setSessionHost(){
         GetRemoteAccessSessionRequest remoteAccessSessionRequest = new GetRemoteAccessSessionRequest().withArn(sessionArn);
         sessionHost = adf.getRemoteAccessSession(remoteAccessSessionRequest).getRemoteAccessSession().getHostAddress();
      }
@@ -161,7 +161,7 @@ public class adfRemoteSession {
         client = new adfRemoteSession(DEVICE,PROJECT,SESSION_NAME);
 
         if (client.waitRemoteSession(SLEEP_TIME, MAX_RETRIES))
-            client.getSessionHost();
+            client.setSessionHost();
 
         String command =
                     awsDeviceFarmTunnelCommand + " " +
