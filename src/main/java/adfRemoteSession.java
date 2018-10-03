@@ -146,13 +146,13 @@ public class adfRemoteSession {
         final String awsDeviceFarmTunnelCommandStart = "start";
         final String awsDeviceFarmTunnelCommandPrivateKey = "~/.aws/devicefarm/prikey.pem";
         final String awsDeviceFarmTunnelCommandOS = "-a -i";
-        final String awsDeviceFarmTunnelCommandMacPass = "-p Welc0me11";
+        final String awsDeviceFarmTunnelCommandMacPass = "-p <MAC_PASSWORD>";
 
 
         final String PROJECT = "remoteAccessTest";
         final String SESSION_NAME = "remoteDebugSession";
         //Apple iPad Air 2, Apple iPhone 8, Google Pixel 2, LG Nexus 5X, Apple iPhone 7
-        final String DEVICE = "Apple iPad Air 2";
+        final String DEVICE = "LG Nexus 5X";
 
         int SLEEP_TIME = 10000;
         int MAX_RETRIES = 20;
