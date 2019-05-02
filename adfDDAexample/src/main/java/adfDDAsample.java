@@ -3,10 +3,14 @@ import com.amazonaws.services.devicefarm.AWSDeviceFarm;
 import com.amazonaws.services.devicefarm.AWSDeviceFarmClientBuilder;
 import com.amazonaws.services.devicefarm.model.*;
 
+import java.io.IOException;
+import java.io.File;
+import java.io.*;
+
 /**
  * Created by karasik on 10/06/2018.
  */
-public class adfRemoteSession {
+public class adfDDAsample {
 
     private AWSDeviceFarm adf;
     private String projectArn;
@@ -95,7 +99,7 @@ public class adfRemoteSession {
     private void setSessionHost(){
         GetRemoteAccessSessionRequest remoteAccessSessionRequest = new GetRemoteAccessSessionRequest().withArn(sessionArn);
         sessionHost = adf.getRemoteAccessSession(remoteAccessSessionRequest).getRemoteAccessSession().getHostAddress();
-     }
+    }
 
     private boolean waitRemoteSession(int sleep_time, int max_retries) throws InterruptedException{
 
@@ -126,7 +130,7 @@ public class adfRemoteSession {
         StopRemoteAccessSessionResult stopRemoteAccessSessionResult = adf.stopRemoteAccessSession(stopRemoteAccessSessionRequest);
     }
 
-    private adfRemoteSession(String device, String project) throws InterruptedException {
+    private adfDDAsample(String device, String project) throws InterruptedException {
 
         try {
             adf = AWSDeviceFarmClientBuilder.standard().build();
@@ -142,6 +146,34 @@ public class adfRemoteSession {
     }
 
 
+    static void executeCommand(String command) throws IOException, InterruptedException {
+
+        File tempScript = createTempScript(command);
+
+        try {
+            ProcessBuilder pb = new ProcessBuilder("bash", tempScript.toString());
+            pb.inheritIO();
+            Process process = pb.start();
+            process.waitFor();
+        } finally {
+            tempScript.delete();
+        }
+    }
+
+    static File createTempScript(String command) throws IOException {
+        File tempScript = File.createTempFile("script", null);
+
+        Writer streamWriter = new OutputStreamWriter(new FileOutputStream(
+                tempScript));
+        PrintWriter printWriter = new PrintWriter(streamWriter);
+
+        printWriter.println("#!/bin/bash");
+        printWriter.println(command);
+        printWriter.close();
+
+        return tempScript;
+    }
+
     public static void main(String[] args) throws InterruptedException{
 
         final String awsDeviceFarmTunnelCommand = "/Users/karasik/aws-device-farm-tunnel-macos/aws-device-farm-tunnel";
@@ -153,45 +185,43 @@ public class adfRemoteSession {
 
         final String PROJECT = "remoteAccessTest";
         final String SESSION_NAME = "remoteDebugSession";
+
         //Apple iPad Air 2, Apple iPhone 8, Google Pixel 2, LG Nexus 5X, Apple iPhone 7
         final String DEVICE = "Apple iPhone 8";
 
         int SLEEP_TIME = 10000;
         int MAX_RETRIES = 20;
 
-        adfRemoteSession client;
-        client = new adfRemoteSession(DEVICE,PROJECT);
+        adfDDAsample client;
+        client = new adfDDAsample(DEVICE,PROJECT);
 
-        if (client.deviceArn.isEmpty()) {
-            System.out.println("Failed to get the device!");
-        } else {
+        if (client.deviceArn.isEmpty()) System.out.println("Failed to get the device!");
+        else {
             client.createRemoteSession(SESSION_NAME);
-            if (client.sessionArn.isEmpty()){
-                System.out.println("Failed to create remote session!");
-            }
+            if (client.sessionArn.isEmpty()) System.out.println("Failed to create remote session!");
             else
             if (client.waitRemoteSession(SLEEP_TIME, MAX_RETRIES)) {
                 client.setSessionHost();
             }
         }
-        
-        String command =
-                    awsDeviceFarmTunnelCommand + " " +
-                    awsDeviceFarmTunnelCommandStart + " " +
-                    awsDeviceFarmTunnelCommandOS + " " +
-                    awsDeviceFarmTunnelCommandMacPass + " " +
-                    awsDeviceFarmTunnelCommandPrivateKey + " " +
-                    client.sessionHost;
 
-                    String script = "osascript -e 'tell app \"Terminal\" to do script \"" + command + "\"'";
-                    System.out.println(script);
-        /*
+        String command =
+                awsDeviceFarmTunnelCommand + " " +
+                        awsDeviceFarmTunnelCommandStart + " " +
+                        awsDeviceFarmTunnelCommandOS + " " +
+                        awsDeviceFarmTunnelCommandMacPass + " " +
+                        awsDeviceFarmTunnelCommandPrivateKey + " " +
+                        client.sessionHost;
+
+        //pass the command to run the bash from the code or open Terminal alternatively:
+        String script = "osascript -e 'tell app \"Terminal\" to do script \"" + command + "\"'";
         try {
-            Runtime.getRuntime().exec("osascript -e 'tell app \"Terminal\" to do script \"" + command + "\"'");
-        }catch (IOException e){
-            System.out.println("Error Message: " + e.getMessage());
+            executeCommand(script);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        */
+
         //client.stopRemoteSession();
     }
 }
+
